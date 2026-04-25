@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     
@@ -11,12 +11,12 @@
     
     
     
-      <meta name="robots" content="index, follow">
+      <meta name="robots" content="noindex, nofollow">
     
     
 
     
-<link rel="stylesheet" href="/ananke/css/main.min.efe4d852f731d5d1fbb87718387202a97aafd768cdcdaed0662bbe6982e91824.css" >
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
 
 
 
@@ -37,12 +37,12 @@
     
 
     
-      <link rel="canonical" href="https://example.org/">
+      <link rel="canonical" href="http://localhost:1313/">
     
 
     
     
-    <meta property="og:url" content="https://example.org/">
+    <meta property="og:url" content="http://localhost:1313/">
   <meta property="og:site_name" content="My New Hugo Project">
   <meta property="og:title" content="My New Hugo Project">
   <meta property="og:locale" content="en_us">
@@ -54,11 +54,8 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="My New Hugo Project">
 
-      
-      
-    
 	
-  </head><body class="ma0 avenir bg-near-white production is-home">
+  </head><body class="ma0 avenir bg-near-white development is-home">
     
 
   <header>
@@ -116,7 +113,40 @@
       
       <div class="blah w-100">
         <h1 class="f3 fw1 athelas mt0 lh-title">
-          <a href="/posts/my-first-post/" class="color-inherit dim link">
+          <a href="/blog/aws-security-groups/" class="color-inherit dim link">
+            How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda
+            </a>
+        </h1>
+        <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
+          <p>In AWS, we might accidentally leave Security Group rules open to:<br>
+0.0.0.0/0.</p>
+<p>That means the resource could be reachable from anywhere on the internet.
+The challenge is not only finding those risky rules, but also understanding the full context in one place:</p>
+<ul>
+<li>which <strong>account</strong> owns the Security Group</li>
+<li>which <strong>Security Group ID</strong> it is</li>
+<li>which <strong>EC2 instance or resource</strong> is attached to it</li>
+<li>and which <strong>Region</strong> it is running in</li>
+</ul>
+<p>In this project, I built a centralized architecture that can automatically detect these cases across multiple AWS accounts and export a report with all of that information in one setup.</p>
+        </div>
+        <a href="/blog/aws-security-groups/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+      </div>
+    </div>
+  </div>
+</article>
+
+          </div>
+        
+          <div class="w-100 mb4 relative">
+            
+<article class="bb b--black-10">
+  <div class="db pv4 ph3 ph0-l dark-gray no-underline">
+    <div class="flex-column flex-row-ns flex">
+      
+      <div class="blah w-100">
+        <h1 class="f3 fw1 athelas mt0 lh-title">
+          <a href="/blog/my-first-post/" class="color-inherit dim link">
             My First Post
             </a>
         </h1>
@@ -125,7 +155,7 @@
 <p>This is <strong>bold</strong> text, and this is <em>emphasized</em> text.</p>
 <p>Visit the <a href="https://gohugo.io">Hugo</a> website!</p>
         </div>
-        <a href="/posts/my-first-post/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+        <a href="/blog/my-first-post/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
       </div>
     </div>
   </div>
@@ -143,7 +173,7 @@
     </main>
     <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
   <div class="flex justify-between">
-  <a class="f4 fw4 hover-white white-70 dn dib-ns pv2 ph3 no-underline" href="https://example.org/" >
+  <a class="f4 fw4 hover-white white-70 dn dib-ns pv2 ph3 no-underline" href="http://localhost:1313/" >
     &copy;  My New Hugo Project 2026 
   </a>
     <div><div class="ananke-socials"></div>

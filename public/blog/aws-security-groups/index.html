@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda | My New Hugo Project</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="In AWS, we might accidentally leave Security Group rules open to:
+0.0.0.0/0.
+That means the resource could be reachable from anywhere on the internet.
+The challenge is not only finding those risky rules, but also understanding the full context in one place:
+
+which account owns the Security Group
+which Security Group ID it is
+which EC2 instance or resource is attached to it
+and which Region it is running in
+
+In this project, I built a centralized architecture that can automatically detect these cases across multiple AWS accounts and export a report with all of that information in one setup.">
+    <meta name="generator" content="Hugo 0.160.1">
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+
+    
+
+
+    
+      
+
+    
+
+    
+
+    
+      <link rel="canonical" href="http://localhost:1313/blog/aws-security-groups/">
+    
+
+    
+    
+    <meta property="og:url" content="http://localhost:1313/blog/aws-security-groups/">
+  <meta property="og:site_name" content="My New Hugo Project">
+  <meta property="og:title" content="How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda">
+  <meta property="og:description" content="In AWS, we might accidentally leave Security Group rules open to:
+0.0.0.0/0.
+That means the resource could be reachable from anywhere on the internet. The challenge is not only finding those risky rules, but also understanding the full context in one place:
+which account owns the Security Group which Security Group ID it is which EC2 instance or resource is attached to it and which Region it is running in In this project, I built a centralized architecture that can automatically detect these cases across multiple AWS accounts and export a report with all of that information in one setup.">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="blog">
+    <meta property="article:published_time" content="2026-04-25T21:44:49+04:00">
+    <meta property="article:modified_time" content="2026-04-25T21:44:49+04:00">
+
+  <meta itemprop="name" content="How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda">
+  <meta itemprop="description" content="In AWS, we might accidentally leave Security Group rules open to:
+0.0.0.0/0.
+That means the resource could be reachable from anywhere on the internet. The challenge is not only finding those risky rules, but also understanding the full context in one place:
+which account owns the Security Group which Security Group ID it is which EC2 instance or resource is attached to it and which Region it is running in In this project, I built a centralized architecture that can automatically detect these cases across multiple AWS accounts and export a report with all of that information in one setup.">
+  <meta itemprop="datePublished" content="2026-04-25T21:44:49+04:00">
+  <meta itemprop="dateModified" content="2026-04-25T21:44:49+04:00">
+  <meta itemprop="wordCount" content="1099">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda">
+  <meta name="twitter:description" content="In AWS, we might accidentally leave Security Group rules open to:
+0.0.0.0/0.
+That means the resource could be reachable from anywhere on the internet. The challenge is not only finding those risky rules, but also understanding the full context in one place:
+which account owns the Security Group which Security Group ID it is which EC2 instance or resource is attached to it and which Region it is running in In this project, I built a centralized architecture that can automatically detect these cases across multiple AWS accounts and export a report with all of that information in one setup.">
+
+	
+  </head><body class="ma0 avenir bg-near-white development is-page is-page page-aws-security-groups">
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l center items-center justify-between">
+    <a href="/" class="f3 fw2 hover-white white-90 dib no-underline">
+      
+        My New Hugo Project
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      <div class="ananke-socials"></div>
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+
+  <article class="page-aws-security-groups flex-l mw7 center ph3 flex-wrap justify-between">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked ttu">
+          
+        Blogs
+      </aside><div id="sharing" class="mt3 ananke-socials"></div>
+<h1 class="f1 athelas mt3 mb1">How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda</h1>
+      
+      
+      
+      <time class="f6 mv4 dib tracked" datetime="2026-04-25T21:44:49+04:00">April 25, 2026</time>
+      
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-100-l"><p>In AWS, we might accidentally leave Security Group rules open to:<br>
+0.0.0.0/0.</p>
+<p>That means the resource could be reachable from anywhere on the internet.
+The challenge is not only finding those risky rules, but also understanding the full context in one place:</p>
+<ul>
+<li>which <strong>account</strong> owns the Security Group</li>
+<li>which <strong>Security Group ID</strong> it is</li>
+<li>which <strong>EC2 instance or resource</strong> is attached to it</li>
+<li>and which <strong>Region</strong> it is running in</li>
+</ul>
+<p>In this project, I built a centralized architecture that can automatically detect these cases across multiple AWS accounts and export a report with all of that information in one setup.</p>
+<p>The solution uses <strong>AWS Lambda</strong>, <strong>AWS Organizations</strong>, <strong>STS AssumeRole</strong>, and <strong>EC2</strong> APIs to scan Security Groups, identify attached resources, store reports in <strong>Amazon S3</strong>, and send a summary to <strong>Slack</strong>.</p>
+<p>When working in a multi-account AWS environment, one common security need is to review Amazon EC2 security groups across all accounts.</p>
+<p>In this project, I built an automated solution that:</p>
+<ul>
+<li>runs from a central AWS account</li>
+<li>discovers accounts in AWS Organizations</li>
+<li>scans security groups across accounts and regions</li>
+<li>detects risky <strong>ingress</strong> rules open to <code>0.0.0.0/0</code></li>
+<li>focuses on sensitive ports such as:
+<ul>
+<li><code>22</code> (SSH)</li>
+<li><code>3389</code> (RDP)</li>
+<li><code>3306</code> (MySQL)</li>
+</ul>
+</li>
+<li>writes the results as both:
+<ul>
+<li>JSON report</li>
+<li>Markdown report</li>
+</ul>
+</li>
+</ul>
+<p>This project helped me understand how to combine <strong>AWS Organizations</strong>, <strong>STS AssumeRole</strong>, <strong>Lambda</strong>, <strong>IAM</strong>, <strong>EC2</strong>, and <strong>S3</strong> in a real-world security automation workflow.</p>
+<hr>
+<h2 id="project-goal">Project Goal</h2>
+<p>The goal was to scan security groups across multiple AWS accounts and identify risky ingress rules exposed to the internet.</p>
+<p>Specifically, I wanted to detect security group rules where:</p>
+<ul>
+<li>source is <strong><code>0.0.0.0/0</code></strong></li>
+<li>port is one of:
+<ul>
+<li><code>22</code></li>
+<li><code>3389</code></li>
+<li><code>3306</code></li>
+</ul>
+</li>
+</ul>
+<p>I also wanted to include both:</p>
+<ul>
+<li><strong>member accounts</strong></li>
+<li><strong>management account</strong></li>
+</ul>
+<hr>
+<h2 id="architecture">Architecture</h2>
+<p>![[assets/architecture.png]]
+The final solution works like this:</p>
+<ol>
+<li>A Lambda function runs in a central AWS account.</li>
+<li>The Lambda calls <strong>AWS Organizations</strong> to list all active accounts.</li>
+<li>For each <strong>member account</strong>, Lambda uses <strong>STS AssumeRole</strong> to assume a cross-account role named <code>SecurityAuditRole</code>.</li>
+<li>For the <strong>management account</strong>, Lambda scans directly using its own execution role.</li>
+<li>Lambda calls EC2 APIs to retrieve security groups and their rules.</li>
+<li>Lambda filters only risky <strong>ingress</strong> rules.</li>
+<li>Lambda writes the output to <strong>Amazon S3</strong> as:
+<ul>
+<li><code>report.json</code></li>
+<li><code>report.md</code></li>
+</ul>
+</li>
+</ol>
+<hr>
+<h1 id="this-is-iam-workflow-that-we-will-be-doing">This is IAM Workflow that we will be doing</h1>
+<p>![[assets/iamworkflow.png]]</p>
+<hr>
+<h1 id="before-you-start">Before You Start</h1>
+<p>You need:</p>
+<ul>
+<li>an <strong>AWS Organization</strong></li>
+<li>one <strong>management account</strong></li>
+<li>one or more <strong>member accounts</strong></li>
+<li>permission to create:
+<ul>
+<li>IAM roles</li>
+<li>Lambda</li>
+<li>S3 bucket</li>
+<li>EventBridge schedule</li>
+</ul>
+</li>
+<li>a Slack workspace where you can create an <strong>Incoming Webhook</strong></li>
+</ul>
+<hr>
+<h1 id="step-1-create-an-s3-bucket-for-reports">Step 1: Create an S3 Bucket for Reports</h1>
+<p>In the <strong>management account</strong>, create an S3 bucket `security-audit-reports</p>
+<p>This bucket will store:</p>
+<ul>
+<li><code>report.json</code></li>
+<li><code>report.md</code></li>
+</ul>
+<hr>
+<h1 id="step-2-create-the-lambda-execution-role-in-the-management-account">Step 2: Create the Lambda Execution Role in the Management Account</h1>
+<h3 id="role-name">Role name</h3>
+<p>`LambdaOrgSecurityReviewRole</p>
+<h2 id="permissions-policy">Permissions policy</h2>
+<pre tabindex="0"><code>{
+    &#34;Version&#34;: &#34;2012-10-17&#34;,
+    &#34;Statement&#34;: [
+        {
+            &#34;Sid&#34;: &#34;OrganizationsRead&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: &#34;organizations:ListAccounts&#34;,
+            &#34;Resource&#34;: &#34;*&#34;
+        },
+        {
+            &#34;Sid&#34;: &#34;AssumeMemberSecurityRole&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: &#34;sts:AssumeRole&#34;,
+            &#34;Resource&#34;: &#34;arn:aws:iam::*:role/SecurityAuditRole&#34;
+        },
+        {
+            &#34;Sid&#34;: &#34;CloudWatchLogs&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: [
+                &#34;logs:CreateLogGroup&#34;,
+                &#34;logs:CreateLogStream&#34;,
+                &#34;logs:PutLogEvents&#34;
+            ],
+            &#34;Resource&#34;: &#34;*&#34;
+        },
+        {
+            &#34;Sid&#34;: &#34;WriteReportsToS3&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: [
+                &#34;s3:PutObject&#34;
+            ],
+            &#34;Resource&#34;: &#34;arn:aws:s3:::security-audit-reports-254292659128-us-east-1-an/*&#34;
+        },
+        {
+            &#34;Sid&#34;: &#34;Ec2ReadForManagementAccountScan&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: [
+                &#34;ec2:DescribeRegions&#34;,
+                &#34;ec2:DescribeSecurityGroups&#34;,
+                &#34;ec2:DescribeNetworkInterfaces&#34;
+            ],
+            &#34;Resource&#34;: &#34;*&#34;
+        }
+    ]
+}
+</code></pre><p>Trust relationships</p>
+<pre tabindex="0"><code>{
+    &#34;Version&#34;: &#34;2012-10-17&#34;,
+    &#34;Statement&#34;: [
+        {
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Principal&#34;: {
+                &#34;Service&#34;: &#34;lambda.amazonaws.com&#34;
+            },
+            &#34;Action&#34;: &#34;sts:AssumeRole&#34;
+        }
+    ]
+}
+</code></pre><p>This role is used by the Lambda function.</p>
+<hr>
+<h1 id="step-3-create-the-cross-account-role-in-each-member-account">Step 3: Create the Cross-Account Role in Each Member Account</h1>
+<p>Now switch to each <strong>member account</strong> and create a role named:</p>
+<p>`SecurityAuditRole</p>
+<p>This is the role the Lambda will assume using STS.</p>
+<h2 id="trust-policy">Trust policy</h2>
+<p>This trust policy allows the Lambda role in the management account to assume it.</p>
+<pre tabindex="0"><code>{
+  &#34;Version&#34;: &#34;2012-10-17&#34;,
+  &#34;Statement&#34;: [
+    {
+      &#34;Effect&#34;: &#34;Allow&#34;,
+      &#34;Principal&#34;: {
+        &#34;AWS&#34;: &#34;arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/LambdaOrgSecurityReviewRole&#34;
+      },
+      &#34;Action&#34;: &#34;sts:AssumeRole&#34;
+    }
+  ]
+}
+</code></pre><h2 id="permissions-policy-1">Permissions policy</h2>
+<pre tabindex="0"><code>{  
+  &#34;Version&#34;: &#34;2012-10-17&#34;,  
+  &#34;Statement&#34;: [  
+    {  
+      &#34;Sid&#34;: &#34;ReadEc2SecurityGroups&#34;,  
+      &#34;Effect&#34;: &#34;Allow&#34;,  
+      &#34;Action&#34;: [  
+        &#34;ec2:DescribeSecurityGroups&#34;,  
+        &#34;ec2:DescribeRegions&#34;,  
+        &#34;ec2:DescribeNetworkInterfaces&#34;  
+      ],  
+      &#34;Resource&#34;: &#34;*&#34;  
+    }  
+  ]  
+}
+</code></pre><hr>
+<h1 id="step-4-create-the-lambda-function">Step 4: Create the Lambda Function</h1>
+<p>Go back to the <strong>management account</strong>.</p>
+<p>Create a Lambda function.</p>
+<ul>
+<li>Function name: <code>security-audit</code></li>
+<li>Runtime: Python 3.x</li>
+<li>Execution role: <code>LambdaOrgSecurityReviewRole</code></li>
+</ul>
+<h3 id="lambda-code">Lambda Code</h3>
+<p>github: &lt;&gt;</p>
+<p>![[assets/lambda.webp]]</p>
+<hr>
+<h1 id="step-5-add-lambda-environment-variables-and-timeout">Step 5: Add Lambda Environment Variables and Timeout</h1>
+<p>In Lambda, go to:</p>
+<p><strong>Configuration → Environment variables</strong></p>
+<p>Add these variables:</p>
+<p><code>ROLE_NAME = SecurityAuditRole  </code>REPORT_BUCKET = your-s3-bucket-name
+<code>REPORT_PREFIX = security-group-audit  </code>REGION_LIST = us-east-1,eu-west-1
+<code>SLACK_WEBHOOK_URL = https://hooks.slack.com/services/xxxx/yyyy/zzzz   </code>SLACK_NOTIFY_ON_NO_FINDINGS = false</p>
+<h2 id="what-they-mean">What they mean</h2>
+<ul>
+<li><code>ROLE_NAME</code><br>
+Role name to assume in member accounts</li>
+<li><code>REPORT_BUCKET</code><br>
+S3 bucket name</li>
+<li><code>REPORT_PREFIX</code><br>
+Folder-like prefix inside S3</li>
+<li><code>REGION_LIST</code><br>
+Regions to scan</li>
+<li><code>SLACK_WEBHOOK_URL</code><br>
+Slack Incoming Webhook URL</li>
+<li><code>SLACK_NOTIFY_ON_NO_FINDINGS</code><br>
+Whether to send Slack even when no findings exist</li>
+</ul>
+<p>![[assets/lambda env.webp]]</p>
+<h3 id="increase-timeout">Increase Timeout</h3>
+<p>Increae timeout to 1min 30 sec because we have to scan all the member account so it need to wait time. You can adjust as you like.</p>
+<p>![[timeout.webp]]</p>
+<hr>
+<h1 id="step-6-create-a-slack-incoming-webhook">Step 6: Create a Slack Incoming Webhook</h1>
+<p>In Slack:</p>
+<ul>
+<li>create or choose a channel</li>
+<li>create an <strong>Incoming Webhook</strong></li>
+<li>copy the webhook URL</li>
+<li>paste it into the Lambda env variable <code>SLACK_WEBHOOK_URL</code></li>
+</ul>
+<p>This allows Lambda to send a summary message to Slack after every run.</p>
+<p>![[assets/slack1.webp]]</p>
+<hr>
+<h1 id="step-7-deploy-and-test-the-lambda-manually">Step 7: Deploy and Test the Lambda Manually</h1>
+<p>Create a simple Lambda test event: `{}</p>
+<p>![[assets/lambdatest.webp]]</p>
+<p>Then click <strong>Test</strong>.</p>
+<p>After the run, check these places:</p>
+<ul>
+<li>Lambda response</li>
+<li>CloudWatch Logs</li>
+<li>S3 bucket</li>
+<li>Slack channel</li>
+</ul>
+<p>You should see:</p>
+<ul>
+<li><code>report.json</code> in S3</li>
+<li><code>report.md</code> in S3</li>
+<li>Slack summary message</li>
+</ul>
+<p>![[assets/s3 report.webp]]</p>
+<p>![[assets/reportmd.webp]]</p>
+<p>![[assets/slack webhook.webp]]</p>
+<p>These are my security groups that open 0.0.0.0/0 to 3306 and 80.
+You can also see the ec2 instance name.</p>
+<hr>
+<h1 id="step-8-add-eventbridge-scheduler">Step 8: Add EventBridge Scheduler</h1>
+<p>Right now, manual testing works.=
+Now automate it.</p>
+<p>Go to:
+<strong>Amazon EventBridge -&gt; Schedules → Create schedule</strong></p>
+<p>![[assets/schedular.webp]]</p>
+<h3 id="settings">Settings</h3>
+<ul>
+<li>
+<p>Name: <code>security-audit-daily</code></p>
+</li>
+<li>
+<p>Schedule pattern:</p>
+<p>rate(1 day)</p>
+</li>
+<li>
+<p>Target:</p>
+<ul>
+<li>Lambda function</li>
+<li>choose <code>security-audit</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="execution-role-for-schedule">Execution role for schedule</h3>
+<p>Choose:</p>
+<p>Create new role for this schedule
+This role only needs to invoke Lambda.</p>
+<p>![[assets/schedule setting.webp]]</p>
+<hr>
+<h1 id="step-9-verify-automatic-execution">Step 9: Verify Automatic Execution</h1>
+<p>Wait for the schedule to trigger the Lambda. ( You can test with 3 min Recurring schdule )</p>
+<p>![[assets/3min schedule.webp]]</p>
+<p>Then verify:</p>
+<ul>
+<li>Lambda ran automatically</li>
+<li>new S3 reports were created</li>
+<li>Slack received a summary message</li>
+</ul>
+<hr>
+<h1 id="final-result">Final Result</h1>
+<p>At the end of this project, I had a solution that:</p>
+<ul>
+<li>scans both management and member accounts</li>
+<li>detects risky ingress rules</li>
+<li>focuses only on sensitive ports</li>
+<li>shows attached resources</li>
+<li>writes JSON and Markdown reports to S3</li>
+<li>sends Slack notifications</li>
+<li>runs automatically on a schedule</li>
+</ul>
+<hr>
+<h1 id="final-thoughts">Final Thoughts</h1>
+<p>This was one of the best projects I built for learning AWS in a practical way.</p>
+<p>It touched a lot of real AWS concepts:</p>
+<ul>
+<li>Organizations</li>
+<li>STS AssumeRole</li>
+<li>IAM trust and permission policies</li>
+<li>Lambda execution roles</li>
+<li>EC2 APIs</li>
+<li>S3 reporting</li>
+<li>EventBridge automation</li>
+<li>Slack integration</li>
+</ul>
+<p>Most importantly, it helped me move from:</p>
+<blockquote>
+<p>“I know the services”</p>
+</blockquote>
+<p>to</p>
+<blockquote>
+<p>“I can connect them together to solve a real problem”</p>
+</blockquote>
+<p>That is where AWS learning starts to feel real.</p>
+<hr>
+<ul class="pa0">
+  
+</ul>
+
+      
+    </div></article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white white-70 dn dib-ns pv2 ph3 no-underline" href="http://localhost:1313/" >
+    &copy;  My New Hugo Project 2026 
+  </a>
+    <div><div class="ananke-socials"></div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>
