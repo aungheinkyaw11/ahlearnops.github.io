@@ -2,25 +2,57 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/blog/</loc>
+    <loc>//localhost:1313/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/blog/aws-security-groups/</loc>
+    <loc>//localhost:1313/categories/aws/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/posts/my-first-post/</loc>
+    <loc>//localhost:1313/tags/aws/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/</loc>
+    <loc>//localhost:1313/categories/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/posts/</loc>
+    <loc>//localhost:1313/categories/cloud-security/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/categories/</loc>
+    <loc>//localhost:1313/tags/ec2/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/excalidraw/</loc>
+    <loc>//localhost:1313/tags/getting-started/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/</loc>
+    <loc>//localhost:1313/posts/aws-security-groups/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
+  </url><url>
+    <loc>//localhost:1313/tags/lambda/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
+  </url><url>
+    <loc>//localhost:1313/categories/meta/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
+  </url><url>
+    <loc>//localhost:1313/posts/my-first-post/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
+  </url><url>
+    <loc>//localhost:1313/tags/organizations/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
+  </url><url>
+    <loc>//localhost:1313/posts/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
+  </url><url>
+    <loc>//localhost:1313/tags/security/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
+  </url><url>
+    <loc>//localhost:1313/tags/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
+  </url><url>
+    <loc>//localhost:1313/about/</loc>
+  </url><url>
+    <loc>//localhost:1313/archives/</loc>
+  </url><url>
+    <loc>//localhost:1313/tags/excalidraw/</loc>
+  </url><url>
+    <loc>//localhost:1313/search/</loc>
   </url>
 </urlset>

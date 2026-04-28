@@ -1,7 +1,79 @@
-baseURL = 'https://example.org/'
-locale = 'en-us'
-title = 'My New Hugo Project'
-theme = 'ananke'
+baseURL = ''
+languageCode = 'en-us'
+title = 'Aung Hein Cloud and DevOps Notes'
+theme = 'PaperMod'
+enableRobotsTXT = true
+
+[outputs]
+  home = ['HTML', 'RSS', 'JSON']
+
+[params]
+  env = 'production'
+  title = 'Aung Hein Cloud and DevOps Notes'
+  description = 'Step-by-step AWS, cloud security, automation, and DevOps tutorials.'
+  keywords = ['AWS', 'Cloud', 'DevOps', 'Security', 'Terraform', 'Linux']
+  author = 'Aung Hein'
+  DateFormat = 'January 2, 2006'
+  defaultTheme = 'auto'
+  ShowReadingTime = true
+  ShowShareButtons = true
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowCodeCopyButtons = true
+  ShowWordCount = true
+  ShowRssButtonInSectionTermList = true
+  UseHugoToc = true
+  disableSpecial1stPost = true
+  mainSections = ['posts']
+
+  [params.label]
+    text = 'Aung Hein'
+
+  [params.cover]
+    hiddenInList = false
+    hiddenInSingle = false
+    linkFullImages = true
+    responsiveImages = true
+
+  [params.homeInfoParams]
+    Title = 'Cloud and DevOps Notes'
+    Content = 'Practical AWS, Linux, infrastructure, and security write-ups with step-by-step walkthroughs.'
+
+  [[params.socialIcons]]
+    name = 'github'
+    url = 'https://github.com/'
+
+  [[params.socialIcons]]
+    name = 'linkedin'
+    url = 'https://www.linkedin.com/'
+
+  [params.fuseOpts]
+    isCaseSensitive = false
+    shouldSort = true
+    location = 0
+    distance = 1000
+    threshold = 0.4
+    minMatchCharLength = 2
+    keys = ['title', 'permalink', 'summary', 'content']
+
+[menu]
+  [[menu.main]]
+    identifier = 'search'
+    name = 'Search'
+    url = '/search/'
+    weight = 10
+
+  [[menu.main]]
+    identifier = 'archives'
+    name = 'Archives'
+    url = '/archives/'
+    weight = 20
+
+  [[menu.main]]
+    identifier = 'about'
+    name = 'About'
+    url = '/about/'
+    weight = 30
 
 [caches]
   [caches.images]

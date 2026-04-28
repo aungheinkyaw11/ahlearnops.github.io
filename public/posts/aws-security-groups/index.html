@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda | Aung Hein Cloud and DevOps Notes</title>
+<meta name="keywords" content="AWS, Security, Lambda, Organizations, EC2">
+<meta name="description" content="A step-by-step guide to scanning risky AWS security group rules across multiple accounts with Lambda, Organizations, STS, S3, and Slack.">
+<meta name="author" content="Aung Hein">
+<link rel="canonical" href="//localhost:1313/posts/aws-security-groups/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.34d91883bcea6e759c2d3a842c5975efd544bfec7ea2927692a4497df4c731c0.css" integrity="sha256-NNkYg7zqbnWcLTqELFl179VEv&#43;x&#43;opJ2kqRJffTHMcA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="//localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="//localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="//localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="//localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="//localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="//localhost:1313/posts/aws-security-groups/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><meta property="og:url" content="//localhost:1313/posts/aws-security-groups/">
+  <meta property="og:site_name" content="Aung Hein Cloud and DevOps Notes">
+  <meta property="og:title" content="How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda">
+  <meta property="og:description" content="A step-by-step guide to scanning risky AWS security group rules across multiple accounts with Lambda, Organizations, STS, S3, and Slack.">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-04-25T21:44:49+04:00">
+    <meta property="article:modified_time" content="2026-04-25T21:44:49+04:00">
+    <meta property="article:tag" content="AWS">
+    <meta property="article:tag" content="Security">
+    <meta property="article:tag" content="Lambda">
+    <meta property="article:tag" content="Organizations">
+    <meta property="article:tag" content="EC2">
+    <meta property="og:image" content="//localhost:1313/posts/aws-security-groups/assets/architecture.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="//localhost:1313/posts/aws-security-groups/assets/architecture.png">
+  <meta name="twitter:title" content="How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda">
+  <meta name="twitter:description" content="A step-by-step guide to scanning risky AWS security group rules across multiple accounts with Lambda, Organizations, STS, S3, and Slack.">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "//localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda",
+      "item": "//localhost:1313/posts/aws-security-groups/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda",
+  "name": "How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda",
+  "description": "A step-by-step guide to scanning risky AWS security group rules across multiple accounts with Lambda, Organizations, STS, S3, and Slack.",
+  "keywords": [
+    "AWS", "Security", "Lambda", "Organizations", "EC2"
+  ],
+  "articleBody": "In AWS, we might accidentally leave Security Group rules open to:\n0.0.0.0/0.\nThat means the resource could be reachable from anywhere on the internet. The challenge is not only finding those risky rules, but also understanding the full context in one place:\nwhich account owns the Security Group which Security Group ID it is which EC2 instance or resource is attached to it and which Region it is running in In this project, I built a centralized architecture that can automatically detect these cases across multiple AWS accounts and export a report with all of that information in one setup.\nThe solution uses AWS Lambda, AWS Organizations, STS AssumeRole, and EC2 APIs to scan Security Groups, identify attached resources, store reports in Amazon S3, and send a summary to Slack.\nWhen working in a multi-account AWS environment, one common security need is to review Amazon EC2 security groups across all accounts.\nIn this project, I built an automated solution that:\nruns from a central AWS account discovers accounts in AWS Organizations scans security groups across accounts and regions detects risky ingress rules open to 0.0.0.0/0 focuses on sensitive ports such as: 22 (SSH) 3389 (RDP) 3306 (MySQL) writes the results as both: JSON report Markdown report This project helped me understand how to combine AWS Organizations, STS AssumeRole, Lambda, IAM, EC2, and S3 in a real-world security automation workflow.\nProject Goal The goal was to scan security groups across multiple AWS accounts and identify risky ingress rules exposed to the internet.\nSpecifically, I wanted to detect security group rules where:\nsource is 0.0.0.0/0 port is one of: 22 3389 3306 I also wanted to include both:\nmember accounts management account Architecture The final solution works like this:\nA Lambda function runs in a central AWS account. The Lambda calls AWS Organizations to list all active accounts. For each member account, Lambda uses STS AssumeRole to assume a cross-account role named SecurityAuditRole. For the management account, Lambda scans directly using its own execution role. Lambda calls EC2 APIs to retrieve security groups and their rules. Lambda filters only risky ingress rules. Lambda writes the output to Amazon S3 as: report.json report.md This is IAM Workflow that we will be doing Before You Start You need:\nan AWS Organization one management account one or more member accounts permission to create: IAM roles Lambda S3 bucket EventBridge schedule a Slack workspace where you can create an Incoming Webhook Step 1: Create an S3 Bucket for Reports In the management account, create an S3 bucket `security-audit-reports\nThis bucket will store:\nreport.json report.md Step 2: Create the Lambda Execution Role in the Management Account Role name `LambdaOrgSecurityReviewRole\nPermissions policy { \"Version\": \"2012-10-17\", \"Statement\": [ { \"Sid\": \"OrganizationsRead\", \"Effect\": \"Allow\", \"Action\": \"organizations:ListAccounts\", \"Resource\": \"*\" }, { \"Sid\": \"AssumeMemberSecurityRole\", \"Effect\": \"Allow\", \"Action\": \"sts:AssumeRole\", \"Resource\": \"arn:aws:iam::*:role/SecurityAuditRole\" }, { \"Sid\": \"CloudWatchLogs\", \"Effect\": \"Allow\", \"Action\": [ \"logs:CreateLogGroup\", \"logs:CreateLogStream\", \"logs:PutLogEvents\" ], \"Resource\": \"*\" }, { \"Sid\": \"WriteReportsToS3\", \"Effect\": \"Allow\", \"Action\": [ \"s3:PutObject\" ], \"Resource\": \"arn:aws:s3:::security-audit-reports-254292659128-us-east-1-an/*\" }, { \"Sid\": \"Ec2ReadForManagementAccountScan\", \"Effect\": \"Allow\", \"Action\": [ \"ec2:DescribeRegions\", \"ec2:DescribeSecurityGroups\", \"ec2:DescribeNetworkInterfaces\" ], \"Resource\": \"*\" } ] } Trust relationships\n{ \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Principal\": { \"Service\": \"lambda.amazonaws.com\" }, \"Action\": \"sts:AssumeRole\" } ] } This role is used by the Lambda function.\nStep 3: Create the Cross-Account Role in Each Member Account Now switch to each member account and create a role named:\n`SecurityAuditRole\nThis is the role the Lambda will assume using STS.\nTrust policy This trust policy allows the Lambda role in the management account to assume it.\n{ \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Principal\": { \"AWS\": \"arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/LambdaOrgSecurityReviewRole\" }, \"Action\": \"sts:AssumeRole\" } ] } Permissions policy { \"Version\": \"2012-10-17\", \"Statement\": [ { \"Sid\": \"ReadEc2SecurityGroups\", \"Effect\": \"Allow\", \"Action\": [ \"ec2:DescribeSecurityGroups\", \"ec2:DescribeRegions\", \"ec2:DescribeNetworkInterfaces\" ], \"Resource\": \"*\" } ] } Step 4: Create the Lambda Function Go back to the management account.\nCreate a Lambda function.\nFunction name: security-audit Runtime: Python 3.x Execution role: LambdaOrgSecurityReviewRole Lambda Code github: \u003c\u003e\nStep 5: Add Lambda Environment Variables and Timeout In Lambda, go to:\nConfiguration → Environment variables\nAdd these variables:\nROLE_NAME = SecurityAuditRole REPORT_BUCKET = your-s3-bucket-name REPORT_PREFIX = security-group-audit REGION_LIST = us-east-1,eu-west-1 SLACK_WEBHOOK_URL = https://hooks.slack.com/services/xxxx/yyyy/zzzz SLACK_NOTIFY_ON_NO_FINDINGS = false\nWhat they mean ROLE_NAME\nRole name to assume in member accounts REPORT_BUCKET\nS3 bucket name REPORT_PREFIX\nFolder-like prefix inside S3 REGION_LIST\nRegions to scan SLACK_WEBHOOK_URL\nSlack Incoming Webhook URL SLACK_NOTIFY_ON_NO_FINDINGS\nWhether to send Slack even when no findings exist Increase Timeout Increae timeout to 1min 30 sec because we have to scan all the member account so it need to wait time. You can adjust as you like.\nStep 6: Create a Slack Incoming Webhook In Slack:\ncreate or choose a channel create an Incoming Webhook copy the webhook URL paste it into the Lambda env variable SLACK_WEBHOOK_URL This allows Lambda to send a summary message to Slack after every run.\nStep 7: Deploy and Test the Lambda Manually Create a simple Lambda test event: `{}\nThen click Test.\nAfter the run, check these places:\nLambda response CloudWatch Logs S3 bucket Slack channel You should see:\nreport.json in S3 report.md in S3 Slack summary message These are my security groups that open 0.0.0.0/0 to 3306 and 80. You can also see the ec2 instance name.\nStep 8: Add EventBridge Scheduler Right now, manual testing works.= Now automate it.\nGo to: Amazon EventBridge -\u003e Schedules → Create schedule\nSettings Name: security-audit-daily\nSchedule pattern:\nrate(1 day)\nTarget:\nLambda function choose security-audit Execution role for schedule Choose:\nCreate new role for this schedule This role only needs to invoke Lambda.\nStep 9: Verify Automatic Execution Wait for the schedule to trigger the Lambda. ( You can test with 3 min Recurring schdule )\nThen verify:\nLambda ran automatically new S3 reports were created Slack received a summary message Final Result At the end of this project, I had a solution that:\nscans both management and member accounts detects risky ingress rules focuses only on sensitive ports shows attached resources writes JSON and Markdown reports to S3 sends Slack notifications runs automatically on a schedule Final Thoughts This was one of the best projects I built for learning AWS in a practical way.\nIt touched a lot of real AWS concepts:\nOrganizations STS AssumeRole IAM trust and permission policies Lambda execution roles EC2 APIs S3 reporting EventBridge automation Slack integration Most importantly, it helped me move from:\n“I know the services”\nto\n“I can connect them together to solve a real problem”\nThat is where AWS learning starts to feel real.\n",
+  "wordCount" : "1081",
+  "inLanguage": "en",
+  "image":"//localhost:1313/posts/aws-security-groups/assets/architecture.png","datePublished": "2026-04-25T21:44:49+04:00",
+  "dateModified": "2026-04-25T21:44:49+04:00",
+  "author":{
+    "@type": "Person",
+    "name": "Aung Hein"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "//localhost:1313/posts/aws-security-groups/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Aung Hein Cloud and DevOps Notes",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "//localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="//localhost:1313/" accesskey="h" title="Aung Hein (Alt + H)">Aung Hein</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="//localhost:1313/search/" title="Search (Alt &#43; /)" accesskey=/>
+                    <span>Search</span>
+                </a>
+            </li>
+            <li>
+                <a href="//localhost:1313/archives/" title="Archives">
+                    <span>Archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="//localhost:1313/about/" title="About">
+                    <span>About</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='//localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="//localhost:1313/posts/">Posts</a></nav>
+    <h1 class="post-title entry-hint-parent">
+      How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda
+    </h1>
+    <div class="post-description">
+      A step-by-step guide to scanning risky AWS security group rules across multiple accounts with Lambda, Organizations, STS, S3, and Slack.
+    </div>
+    <div class="post-meta"><span title='2026-04-25 21:44:49 +0400 +04'>April 25, 2026</span>&nbsp;·&nbsp;<span>6 min</span>&nbsp;·&nbsp;<span>1081 words</span>&nbsp;·&nbsp;<span>Aung Hein</span>
+
+</div>
+  </header> 
+<figure class="entry-cover">
+        <a href="//localhost:1313/posts/aws-security-groups/assets/architecture.png" target="_blank" rel="noopener noreferrer">
+            <img loading="eager"
+                srcset='//localhost:1313/posts/aws-security-groups/assets/architecture_hu_5dd52ed350551ea1.png 360w,//localhost:1313/posts/aws-security-groups/assets/architecture_hu_58ebc0436915f944.png 480w,//localhost:1313/posts/aws-security-groups/assets/architecture_hu_2952baac8e91f940.png 720w,//localhost:1313/posts/aws-security-groups/assets/architecture_hu_3c14e712f4570eac.png 1080w,//localhost:1313/posts/aws-security-groups/assets/architecture_hu_2af73956a132faef.png 1500w,//localhost:1313/posts/aws-security-groups/assets/architecture.png 4380w'
+                src="//localhost:1313/posts/aws-security-groups/assets/architecture.png"
+                sizes="(min-width: 768px) 720px, 100vw"
+                width="4380" height="2072"
+                alt="Architecture diagram for the AWS security group audit workflow">
+        </a>
+        <figcaption>Centralized multi-account security group audit workflow</figcaption>
+</figure><details class="toc"  open>
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#project-goal">Project Goal</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#role-name">Role name</a></li>
+      </ul>
+    </li>
+    <li><a href="#permissions-policy">Permissions policy</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#trust-policy">Trust policy</a></li>
+    <li><a href="#permissions-policy-1">Permissions policy</a></li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#lambda-code">Lambda Code</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#what-they-mean">What they mean</a>
+      <ul>
+        <li><a href="#increase-timeout">Increase Timeout</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#settings">Settings</a></li>
+        <li><a href="#execution-role-for-schedule">Execution role for schedule</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+    </div>
+</details>
+
+  <div class="post-content md-content"><p>In AWS, we might accidentally leave Security Group rules open to:<br>
+0.0.0.0/0.</p>
+<p>That means the resource could be reachable from anywhere on the internet.
+The challenge is not only finding those risky rules, but also understanding the full context in one place:</p>
+<ul>
+<li>which <strong>account</strong> owns the Security Group</li>
+<li>which <strong>Security Group ID</strong> it is</li>
+<li>which <strong>EC2 instance or resource</strong> is attached to it</li>
+<li>and which <strong>Region</strong> it is running in</li>
+</ul>
+<p>In this project, I built a centralized architecture that can automatically detect these cases across multiple AWS accounts and export a report with all of that information in one setup.</p>
+<p>The solution uses <strong>AWS Lambda</strong>, <strong>AWS Organizations</strong>, <strong>STS AssumeRole</strong>, and <strong>EC2</strong> APIs to scan Security Groups, identify attached resources, store reports in <strong>Amazon S3</strong>, and send a summary to <strong>Slack</strong>.</p>
+<p>When working in a multi-account AWS environment, one common security need is to review Amazon EC2 security groups across all accounts.</p>
+<p>In this project, I built an automated solution that:</p>
+<ul>
+<li>runs from a central AWS account</li>
+<li>discovers accounts in AWS Organizations</li>
+<li>scans security groups across accounts and regions</li>
+<li>detects risky <strong>ingress</strong> rules open to <code>0.0.0.0/0</code></li>
+<li>focuses on sensitive ports such as:
+<ul>
+<li><code>22</code> (SSH)</li>
+<li><code>3389</code> (RDP)</li>
+<li><code>3306</code> (MySQL)</li>
+</ul>
+</li>
+<li>writes the results as both:
+<ul>
+<li>JSON report</li>
+<li>Markdown report</li>
+</ul>
+</li>
+</ul>
+<p>This project helped me understand how to combine <strong>AWS Organizations</strong>, <strong>STS AssumeRole</strong>, <strong>Lambda</strong>, <strong>IAM</strong>, <strong>EC2</strong>, and <strong>S3</strong> in a real-world security automation workflow.</p>
+<hr>
+<h2 id="project-goal">Project Goal<a hidden class="anchor" aria-hidden="true" href="#project-goal">#</a></h2>
+<p>The goal was to scan security groups across multiple AWS accounts and identify risky ingress rules exposed to the internet.</p>
+<p>Specifically, I wanted to detect security group rules where:</p>
+<ul>
+<li>source is <strong><code>0.0.0.0/0</code></strong></li>
+<li>port is one of:
+<ul>
+<li><code>22</code></li>
+<li><code>3389</code></li>
+<li><code>3306</code></li>
+</ul>
+</li>
+</ul>
+<p>I also wanted to include both:</p>
+<ul>
+<li><strong>member accounts</strong></li>
+<li><strong>management account</strong></li>
+</ul>
+<hr>
+<h2 id="architecture">Architecture<a hidden class="anchor" aria-hidden="true" href="#architecture">#</a></h2>
+<p><img alt="Architecture diagram" loading="lazy" src="/posts/aws-security-groups/assets/architecture.png">
+The final solution works like this:</p>
+<ol>
+<li>A Lambda function runs in a central AWS account.</li>
+<li>The Lambda calls <strong>AWS Organizations</strong> to list all active accounts.</li>
+<li>For each <strong>member account</strong>, Lambda uses <strong>STS AssumeRole</strong> to assume a cross-account role named <code>SecurityAuditRole</code>.</li>
+<li>For the <strong>management account</strong>, Lambda scans directly using its own execution role.</li>
+<li>Lambda calls EC2 APIs to retrieve security groups and their rules.</li>
+<li>Lambda filters only risky <strong>ingress</strong> rules.</li>
+<li>Lambda writes the output to <strong>Amazon S3</strong> as:
+<ul>
+<li><code>report.json</code></li>
+<li><code>report.md</code></li>
+</ul>
+</li>
+</ol>
+<hr>
+<h1 id="this-is-iam-workflow-that-we-will-be-doing">This is IAM Workflow that we will be doing<a hidden class="anchor" aria-hidden="true" href="#this-is-iam-workflow-that-we-will-be-doing">#</a></h1>
+<p><img alt="IAM workflow" loading="lazy" src="/posts/aws-security-groups/assets/iamworkflow.png"></p>
+<hr>
+<h1 id="before-you-start">Before You Start<a hidden class="anchor" aria-hidden="true" href="#before-you-start">#</a></h1>
+<p>You need:</p>
+<ul>
+<li>an <strong>AWS Organization</strong></li>
+<li>one <strong>management account</strong></li>
+<li>one or more <strong>member accounts</strong></li>
+<li>permission to create:
+<ul>
+<li>IAM roles</li>
+<li>Lambda</li>
+<li>S3 bucket</li>
+<li>EventBridge schedule</li>
+</ul>
+</li>
+<li>a Slack workspace where you can create an <strong>Incoming Webhook</strong></li>
+</ul>
+<hr>
+<h1 id="step-1-create-an-s3-bucket-for-reports">Step 1: Create an S3 Bucket for Reports<a hidden class="anchor" aria-hidden="true" href="#step-1-create-an-s3-bucket-for-reports">#</a></h1>
+<p>In the <strong>management account</strong>, create an S3 bucket `security-audit-reports</p>
+<p>This bucket will store:</p>
+<ul>
+<li><code>report.json</code></li>
+<li><code>report.md</code></li>
+</ul>
+<hr>
+<h1 id="step-2-create-the-lambda-execution-role-in-the-management-account">Step 2: Create the Lambda Execution Role in the Management Account<a hidden class="anchor" aria-hidden="true" href="#step-2-create-the-lambda-execution-role-in-the-management-account">#</a></h1>
+<h3 id="role-name">Role name<a hidden class="anchor" aria-hidden="true" href="#role-name">#</a></h3>
+<p>`LambdaOrgSecurityReviewRole</p>
+<h2 id="permissions-policy">Permissions policy<a hidden class="anchor" aria-hidden="true" href="#permissions-policy">#</a></h2>
+<pre tabindex="0"><code>{
+    &#34;Version&#34;: &#34;2012-10-17&#34;,
+    &#34;Statement&#34;: [
+        {
+            &#34;Sid&#34;: &#34;OrganizationsRead&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: &#34;organizations:ListAccounts&#34;,
+            &#34;Resource&#34;: &#34;*&#34;
+        },
+        {
+            &#34;Sid&#34;: &#34;AssumeMemberSecurityRole&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: &#34;sts:AssumeRole&#34;,
+            &#34;Resource&#34;: &#34;arn:aws:iam::*:role/SecurityAuditRole&#34;
+        },
+        {
+            &#34;Sid&#34;: &#34;CloudWatchLogs&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: [
+                &#34;logs:CreateLogGroup&#34;,
+                &#34;logs:CreateLogStream&#34;,
+                &#34;logs:PutLogEvents&#34;
+            ],
+            &#34;Resource&#34;: &#34;*&#34;
+        },
+        {
+            &#34;Sid&#34;: &#34;WriteReportsToS3&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: [
+                &#34;s3:PutObject&#34;
+            ],
+            &#34;Resource&#34;: &#34;arn:aws:s3:::security-audit-reports-254292659128-us-east-1-an/*&#34;
+        },
+        {
+            &#34;Sid&#34;: &#34;Ec2ReadForManagementAccountScan&#34;,
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Action&#34;: [
+                &#34;ec2:DescribeRegions&#34;,
+                &#34;ec2:DescribeSecurityGroups&#34;,
+                &#34;ec2:DescribeNetworkInterfaces&#34;
+            ],
+            &#34;Resource&#34;: &#34;*&#34;
+        }
+    ]
+}
+</code></pre><p>Trust relationships</p>
+<pre tabindex="0"><code>{
+    &#34;Version&#34;: &#34;2012-10-17&#34;,
+    &#34;Statement&#34;: [
+        {
+            &#34;Effect&#34;: &#34;Allow&#34;,
+            &#34;Principal&#34;: {
+                &#34;Service&#34;: &#34;lambda.amazonaws.com&#34;
+            },
+            &#34;Action&#34;: &#34;sts:AssumeRole&#34;
+        }
+    ]
+}
+</code></pre><p>This role is used by the Lambda function.</p>
+<hr>
+<h1 id="step-3-create-the-cross-account-role-in-each-member-account">Step 3: Create the Cross-Account Role in Each Member Account<a hidden class="anchor" aria-hidden="true" href="#step-3-create-the-cross-account-role-in-each-member-account">#</a></h1>
+<p>Now switch to each <strong>member account</strong> and create a role named:</p>
+<p>`SecurityAuditRole</p>
+<p>This is the role the Lambda will assume using STS.</p>
+<h2 id="trust-policy">Trust policy<a hidden class="anchor" aria-hidden="true" href="#trust-policy">#</a></h2>
+<p>This trust policy allows the Lambda role in the management account to assume it.</p>
+<pre tabindex="0"><code>{
+  &#34;Version&#34;: &#34;2012-10-17&#34;,
+  &#34;Statement&#34;: [
+    {
+      &#34;Effect&#34;: &#34;Allow&#34;,
+      &#34;Principal&#34;: {
+        &#34;AWS&#34;: &#34;arn:aws:iam::MANAGEMENT-ACCOUNT-ID:role/LambdaOrgSecurityReviewRole&#34;
+      },
+      &#34;Action&#34;: &#34;sts:AssumeRole&#34;
+    }
+  ]
+}
+</code></pre><h2 id="permissions-policy-1">Permissions policy<a hidden class="anchor" aria-hidden="true" href="#permissions-policy-1">#</a></h2>
+<pre tabindex="0"><code>{  
+  &#34;Version&#34;: &#34;2012-10-17&#34;,  
+  &#34;Statement&#34;: [  
+    {  
+      &#34;Sid&#34;: &#34;ReadEc2SecurityGroups&#34;,  
+      &#34;Effect&#34;: &#34;Allow&#34;,  
+      &#34;Action&#34;: [  
+        &#34;ec2:DescribeSecurityGroups&#34;,  
+        &#34;ec2:DescribeRegions&#34;,  
+        &#34;ec2:DescribeNetworkInterfaces&#34;  
+      ],  
+      &#34;Resource&#34;: &#34;*&#34;  
+    }  
+  ]  
+}
+</code></pre><hr>
+<h1 id="step-4-create-the-lambda-function">Step 4: Create the Lambda Function<a hidden class="anchor" aria-hidden="true" href="#step-4-create-the-lambda-function">#</a></h1>
+<p>Go back to the <strong>management account</strong>.</p>
+<p>Create a Lambda function.</p>
+<ul>
+<li>Function name: <code>security-audit</code></li>
+<li>Runtime: Python 3.x</li>
+<li>Execution role: <code>LambdaOrgSecurityReviewRole</code></li>
+</ul>
+<h3 id="lambda-code">Lambda Code<a hidden class="anchor" aria-hidden="true" href="#lambda-code">#</a></h3>
+<p>github: &lt;&gt;</p>
+<p><img alt="Lambda function configuration" loading="lazy" src="/posts/aws-security-groups/assets/lambda.webp"></p>
+<hr>
+<h1 id="step-5-add-lambda-environment-variables-and-timeout">Step 5: Add Lambda Environment Variables and Timeout<a hidden class="anchor" aria-hidden="true" href="#step-5-add-lambda-environment-variables-and-timeout">#</a></h1>
+<p>In Lambda, go to:</p>
+<p><strong>Configuration → Environment variables</strong></p>
+<p>Add these variables:</p>
+<p><code>ROLE_NAME = SecurityAuditRole  </code>REPORT_BUCKET = your-s3-bucket-name
+<code>REPORT_PREFIX = security-group-audit  </code>REGION_LIST = us-east-1,eu-west-1
+<code>SLACK_WEBHOOK_URL = https://hooks.slack.com/services/xxxx/yyyy/zzzz   </code>SLACK_NOTIFY_ON_NO_FINDINGS = false</p>
+<h2 id="what-they-mean">What they mean<a hidden class="anchor" aria-hidden="true" href="#what-they-mean">#</a></h2>
+<ul>
+<li><code>ROLE_NAME</code><br>
+Role name to assume in member accounts</li>
+<li><code>REPORT_BUCKET</code><br>
+S3 bucket name</li>
+<li><code>REPORT_PREFIX</code><br>
+Folder-like prefix inside S3</li>
+<li><code>REGION_LIST</code><br>
+Regions to scan</li>
+<li><code>SLACK_WEBHOOK_URL</code><br>
+Slack Incoming Webhook URL</li>
+<li><code>SLACK_NOTIFY_ON_NO_FINDINGS</code><br>
+Whether to send Slack even when no findings exist</li>
+</ul>
+<p><img alt="Lambda environment variables" loading="lazy" src="/posts/aws-security-groups/assets/lambda%20env.webp"></p>
+<h3 id="increase-timeout">Increase Timeout<a hidden class="anchor" aria-hidden="true" href="#increase-timeout">#</a></h3>
+<p>Increae timeout to 1min 30 sec because we have to scan all the member account so it need to wait time. You can adjust as you like.</p>
+<p><img alt="Lambda timeout setting" loading="lazy" src="/posts/aws-security-groups/assets/timeout.webp"></p>
+<hr>
+<h1 id="step-6-create-a-slack-incoming-webhook">Step 6: Create a Slack Incoming Webhook<a hidden class="anchor" aria-hidden="true" href="#step-6-create-a-slack-incoming-webhook">#</a></h1>
+<p>In Slack:</p>
+<ul>
+<li>create or choose a channel</li>
+<li>create an <strong>Incoming Webhook</strong></li>
+<li>copy the webhook URL</li>
+<li>paste it into the Lambda env variable <code>SLACK_WEBHOOK_URL</code></li>
+</ul>
+<p>This allows Lambda to send a summary message to Slack after every run.</p>
+<p><img alt="Slack incoming webhook setup" loading="lazy" src="/posts/aws-security-groups/assets/slack1.webp"></p>
+<hr>
+<h1 id="step-7-deploy-and-test-the-lambda-manually">Step 7: Deploy and Test the Lambda Manually<a hidden class="anchor" aria-hidden="true" href="#step-7-deploy-and-test-the-lambda-manually">#</a></h1>
+<p>Create a simple Lambda test event: `{}</p>
+<p><img alt="Lambda test event" loading="lazy" src="/posts/aws-security-groups/assets/lambdatest.webp"></p>
+<p>Then click <strong>Test</strong>.</p>
+<p>After the run, check these places:</p>
+<ul>
+<li>Lambda response</li>
+<li>CloudWatch Logs</li>
+<li>S3 bucket</li>
+<li>Slack channel</li>
+</ul>
+<p>You should see:</p>
+<ul>
+<li><code>report.json</code> in S3</li>
+<li><code>report.md</code> in S3</li>
+<li>Slack summary message</li>
+</ul>
+<p><img alt="S3 report output" loading="lazy" src="/posts/aws-security-groups/assets/s3%20report.webp"></p>
+<p><img alt="Markdown report output" loading="lazy" src="/posts/aws-security-groups/assets/reportmd.webp"></p>
+<p><img alt="Slack webhook message" loading="lazy" src="/posts/aws-security-groups/assets/slack%20webhook.webp"></p>
+<p>These are my security groups that open 0.0.0.0/0 to 3306 and 80.
+You can also see the ec2 instance name.</p>
+<hr>
+<h1 id="step-8-add-eventbridge-scheduler">Step 8: Add EventBridge Scheduler<a hidden class="anchor" aria-hidden="true" href="#step-8-add-eventbridge-scheduler">#</a></h1>
+<p>Right now, manual testing works.=
+Now automate it.</p>
+<p>Go to:
+<strong>Amazon EventBridge -&gt; Schedules → Create schedule</strong></p>
+<p><img alt="EventBridge scheduler" loading="lazy" src="/posts/aws-security-groups/assets/schedular.webp"></p>
+<h3 id="settings">Settings<a hidden class="anchor" aria-hidden="true" href="#settings">#</a></h3>
+<ul>
+<li>
+<p>Name: <code>security-audit-daily</code></p>
+</li>
+<li>
+<p>Schedule pattern:</p>
+<p>rate(1 day)</p>
+</li>
+<li>
+<p>Target:</p>
+<ul>
+<li>Lambda function</li>
+<li>choose <code>security-audit</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="execution-role-for-schedule">Execution role for schedule<a hidden class="anchor" aria-hidden="true" href="#execution-role-for-schedule">#</a></h3>
+<p>Choose:</p>
+<p>Create new role for this schedule
+This role only needs to invoke Lambda.</p>
+<p><img alt="Schedule settings" loading="lazy" src="/posts/aws-security-groups/assets/schedule%20setting.webp"></p>
+<hr>
+<h1 id="step-9-verify-automatic-execution">Step 9: Verify Automatic Execution<a hidden class="anchor" aria-hidden="true" href="#step-9-verify-automatic-execution">#</a></h1>
+<p>Wait for the schedule to trigger the Lambda. ( You can test with 3 min Recurring schdule )</p>
+<p><img alt="Three-minute test schedule" loading="lazy" src="/posts/aws-security-groups/assets/3min%20schedule.webp"></p>
+<p>Then verify:</p>
+<ul>
+<li>Lambda ran automatically</li>
+<li>new S3 reports were created</li>
+<li>Slack received a summary message</li>
+</ul>
+<hr>
+<h1 id="final-result">Final Result<a hidden class="anchor" aria-hidden="true" href="#final-result">#</a></h1>
+<p>At the end of this project, I had a solution that:</p>
+<ul>
+<li>scans both management and member accounts</li>
+<li>detects risky ingress rules</li>
+<li>focuses only on sensitive ports</li>
+<li>shows attached resources</li>
+<li>writes JSON and Markdown reports to S3</li>
+<li>sends Slack notifications</li>
+<li>runs automatically on a schedule</li>
+</ul>
+<hr>
+<h1 id="final-thoughts">Final Thoughts<a hidden class="anchor" aria-hidden="true" href="#final-thoughts">#</a></h1>
+<p>This was one of the best projects I built for learning AWS in a practical way.</p>
+<p>It touched a lot of real AWS concepts:</p>
+<ul>
+<li>Organizations</li>
+<li>STS AssumeRole</li>
+<li>IAM trust and permission policies</li>
+<li>Lambda execution roles</li>
+<li>EC2 APIs</li>
+<li>S3 reporting</li>
+<li>EventBridge automation</li>
+<li>Slack integration</li>
+</ul>
+<p>Most importantly, it helped me move from:</p>
+<blockquote>
+<p>“I know the services”</p>
+</blockquote>
+<p>to</p>
+<blockquote>
+<p>“I can connect them together to solve a real problem”</p>
+</blockquote>
+<p>That is where AWS learning starts to feel real.</p>
+<hr>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="//localhost:1313/tags/aws/">AWS</a></li>
+      <li><a href="//localhost:1313/tags/security/">Security</a></li>
+      <li><a href="//localhost:1313/tags/lambda/">Lambda</a></li>
+      <li><a href="//localhost:1313/tags/organizations/">Organizations</a></li>
+      <li><a href="//localhost:1313/tags/ec2/">EC2</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="//localhost:1313/posts/my-first-post/">
+    <span class="title">Next »</span>
+    <span>My First Post</span>
+  </a>
+</nav>
+
+
+<ul class="share-buttons">
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda on x"
+            href="https://x.com/intent/tweet/?text=How%20to%20Track%20Down%20Risky%20Security%20Group%20Rules%20Across%20All%20of%20Your%20AWS%20Accounts%20using%20Lambda&amp;url=%2f%2flocalhost%3a1313%2fposts%2faws-security-groups%2f&amp;hashtags=AWS%2cSecurity%2cLambda%2cOrganizations%2cEC2">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M512 62.554 L 512 449.446 C 512 483.97 483.97 512 449.446 512 L 62.554 512 C 28.03 512 0 483.97 0 449.446 L 0 62.554 C 0 28.03 28.029 0 62.554 0 L 449.446 0 C 483.971 0 512 28.03 512 62.554 Z M 269.951 190.75 L 182.567 75.216 L 56 75.216 L 207.216 272.95 L 63.9 436.783 L 125.266 436.783 L 235.9 310.383 L 332.567 436.783 L 456 436.783 L 298.367 228.367 L 432.367 75.216 L 371.033 75.216 Z M 127.633 110 L 164.101 110 L 383.481 400.065 L 349.5 400.065 Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda on linkedin"
+            href="https://www.linkedin.com/shareArticle?mini=true&amp;url=%2f%2flocalhost%3a1313%2fposts%2faws-security-groups%2f&amp;title=How%20to%20Track%20Down%20Risky%20Security%20Group%20Rules%20Across%20All%20of%20Your%20AWS%20Accounts%20using%20Lambda&amp;summary=How%20to%20Track%20Down%20Risky%20Security%20Group%20Rules%20Across%20All%20of%20Your%20AWS%20Accounts%20using%20Lambda&amp;source=%2f%2flocalhost%3a1313%2fposts%2faws-security-groups%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda on reddit"
+            href="https://reddit.com/submit?url=%2f%2flocalhost%3a1313%2fposts%2faws-security-groups%2f&title=How%20to%20Track%20Down%20Risky%20Security%20Group%20Rules%20Across%20All%20of%20Your%20AWS%20Accounts%20using%20Lambda">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda on facebook"
+            href="https://facebook.com/sharer/sharer.php?u=%2f%2flocalhost%3a1313%2fposts%2faws-security-groups%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda on whatsapp"
+            href="https://api.whatsapp.com/send?text=How%20to%20Track%20Down%20Risky%20Security%20Group%20Rules%20Across%20All%20of%20Your%20AWS%20Accounts%20using%20Lambda%20-%20%2f%2flocalhost%3a1313%2fposts%2faws-security-groups%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda on telegram"
+            href="https://telegram.me/share/url?text=How%20to%20Track%20Down%20Risky%20Security%20Group%20Rules%20Across%20All%20of%20Your%20AWS%20Accounts%20using%20Lambda&amp;url=%2f%2flocalhost%3a1313%2fposts%2faws-security-groups%2f">
+            <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda on ycombinator"
+            href="https://news.ycombinator.com/submitlink?t=How%20to%20Track%20Down%20Risky%20Security%20Group%20Rules%20Across%20All%20of%20Your%20AWS%20Accounts%20using%20Lambda&u=%2f%2flocalhost%3a1313%2fposts%2faws-security-groups%2f">
+            <svg version="1.1" xml:space="preserve" width="30px" height="30px" viewBox="0 0 512 512" fill="currentColor"
+                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+                <path
+                    d="M449.446 0C483.971 0 512 28.03 512 62.554L512 449.446C512 483.97 483.97 512 449.446 512L62.554 512C28.03 512 0 483.97 0 449.446L0 62.554C0 28.03 28.029 0 62.554 0L449.446 0ZM183.8767 87.9921H121.8427L230.6673 292.4508V424.0079H281.3328V292.4508L390.1575 87.9921H328.1233L256 238.2489z" />
+            </svg>
+        </a>
+    </li>
+</ul>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="//localhost:1313/">Aung Hein Cloud and DevOps Notes</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

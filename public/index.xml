@@ -1,26 +1,33 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>My New Hugo Project</title>
-    <link>http://localhost:1313/</link>
-    <description>Recent content on My New Hugo Project</description>
+    <title>Aung Hein Cloud and DevOps Notes</title>
+    <link>//localhost:1313/</link>
+    <description>Recent content on Aung Hein Cloud and DevOps Notes</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 25 Apr 2026 21:44:49 +0400</lastBuildDate>
-    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="//localhost:1313/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda</title>
-      <link>http://localhost:1313/blog/aws-security-groups/</link>
+      <link>//localhost:1313/posts/aws-security-groups/</link>
       <pubDate>Sat, 25 Apr 2026 21:44:49 +0400</pubDate>
-      <guid>http://localhost:1313/blog/aws-security-groups/</guid>
-      <description>&lt;p&gt;In AWS, we might accidentally leave Security Group rules open to:&lt;br&gt;&#xA;0.0.0.0/0.&lt;/p&gt;&#xA;&lt;p&gt;That means the resource could be reachable from anywhere on the internet.&#xA;The challenge is not only finding those risky rules, but also understanding the full context in one place:&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;which &lt;strong&gt;account&lt;/strong&gt; owns the Security Group&lt;/li&gt;&#xA;&lt;li&gt;which &lt;strong&gt;Security Group ID&lt;/strong&gt; it is&lt;/li&gt;&#xA;&lt;li&gt;which &lt;strong&gt;EC2 instance or resource&lt;/strong&gt; is attached to it&lt;/li&gt;&#xA;&lt;li&gt;and which &lt;strong&gt;Region&lt;/strong&gt; it is running in&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;In this project, I built a centralized architecture that can automatically detect these cases across multiple AWS accounts and export a report with all of that information in one setup.&lt;/p&gt;</description>
+      <guid>//localhost:1313/posts/aws-security-groups/</guid>
+      <description>A step-by-step guide to scanning risky AWS security group rules across multiple accounts with Lambda, Organizations, STS, S3, and Slack.</description>
     </item>
     <item>
       <title>My First Post</title>
-      <link>http://localhost:1313/blog/my-first-post/</link>
+      <link>//localhost:1313/posts/my-first-post/</link>
       <pubDate>Sat, 25 Apr 2026 21:44:49 +0400</pubDate>
-      <guid>http://localhost:1313/blog/my-first-post/</guid>
-      <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;&#xA;&lt;p&gt;This is &lt;strong&gt;bold&lt;/strong&gt; text, and this is &lt;em&gt;emphasized&lt;/em&gt; text.&lt;/p&gt;&#xA;&lt;p&gt;Visit the &lt;a href=&#34;https://gohugo.io&#34;&gt;Hugo&lt;/a&gt; website!&lt;/p&gt;</description>
+      <guid>//localhost:1313/posts/my-first-post/</guid>
+      <description>A short sample post used while setting up the site.</description>
+    </item>
+    <item>
+      <title>About</title>
+      <link>//localhost:1313/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/about/</guid>
+      <description>About this site and what it covers.</description>
     </item>
   </channel>
 </rss>
