@@ -2,18 +2,25 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Cloud Security on Aung Hein Cloud and DevOps Notes</title>
-    <link>//localhost:1313/categories/cloud-security/</link>
+    <link>/categories/cloud-security/</link>
     <description>Recent content in Cloud Security on Aung Hein Cloud and DevOps Notes</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 25 Apr 2026 21:44:49 +0400</lastBuildDate>
-    <atom:link href="//localhost:1313/categories/cloud-security/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="/categories/cloud-security/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>How to Track Down Risky Security Group Rules Across All of Your AWS Accounts using Lambda</title>
-      <link>//localhost:1313/posts/aws-security-groups/</link>
+      <link>/posts/aws-security-groups/</link>
       <pubDate>Sat, 25 Apr 2026 21:44:49 +0400</pubDate>
-      <guid>//localhost:1313/posts/aws-security-groups/</guid>
+      <guid>/posts/aws-security-groups/</guid>
       <description>A step-by-step guide to scanning risky AWS security group rules across multiple accounts with Lambda, Organizations, STS, S3, and Slack.</description>
+    </item>
+    <item>
+      <title>Kubernetes LoadBalancer service on Amazon EKS</title>
+      <link>/posts/kubernetes-clb/kubernetes-classic-loadbalancer-explained/</link>
+      <pubDate>Sat, 25 Apr 2026 21:44:49 +0400</pubDate>
+      <guid>/posts/kubernetes-clb/kubernetes-classic-loadbalancer-explained/</guid>
+      <description>A step-by-step guide to Kubernetes LoadBalancer service on Amazon EKS.</description>
     </item>
   </channel>
 </rss>

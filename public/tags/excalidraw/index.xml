@@ -2,10 +2,34 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Excalidraw on Aung Hein Cloud and DevOps Notes</title>
-    <link>//localhost:1313/tags/excalidraw/</link>
+    <link>/tags/excalidraw/</link>
     <description>Recent content in Excalidraw on Aung Hein Cloud and DevOps Notes</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <atom:link href="//localhost:1313/tags/excalidraw/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="/tags/excalidraw/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title></title>
+      <link>/posts/kubernetes-clb/assets/assets/2026-04-27-09.28.excalidraw/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>/posts/kubernetes-clb/assets/assets/2026-04-27-09.28.excalidraw/</guid>
+      <description>&lt;p&gt;==⚠  Switch to EXCALIDRAW VIEW in the MORE OPTIONS menu of this document. ⚠== You can decompress Drawing data with the command palette: &amp;lsquo;Decompress current Excalidraw file&amp;rsquo;. For more info check in plugin settings under &amp;lsquo;Saving&amp;rsquo;&lt;/p&gt;
+&lt;h1 id=&#34;excalidraw-data&#34;&gt;Excalidraw Data&lt;/h1&gt;
+&lt;h2 id=&#34;text-elements&#34;&gt;Text Elements&lt;/h2&gt;
+&lt;p&gt;CLB ^dgnaKUNO&lt;/p&gt;
+&lt;p&gt;User ^JEST1r4r&lt;/p&gt;
+&lt;p&gt;User ^Frvj7QSE&lt;/p&gt;
+&lt;p&gt;EC2 ^fcYQzuyd&lt;/p&gt;
+&lt;p&gt;EC2 ^IQYQZlCh&lt;/p&gt;
+&lt;p&gt;Pod ^Rf8KfTnJ&lt;/p&gt;
+&lt;p&gt;SVC ^xJ0oYf47&lt;/p&gt;
+&lt;p&gt;Listener
+SSL 443
+TCP 30165 ^oiN1QLCe&lt;/p&gt;
+&lt;p&gt;TCP:30165 ^Cv6dPwFx&lt;/p&gt;
+&lt;p&gt;dashboard ^tQlxIOgO&lt;/p&gt;
+&lt;p&gt;TCP:30165 ^5yvTK9io&lt;/p&gt;
+&lt;p&gt;svc/counting:9001 ^DKcf0hPC&lt;/p&gt;
+&lt;p&gt;svc/dashboard:9002 ^eqhrPXSe&lt;/p&gt;</description>
+    </item>
   </channel>
 </rss>

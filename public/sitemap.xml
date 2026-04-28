@@ -2,57 +2,62 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>//localhost:1313/</loc>
+    <loc>/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/categories/aws/</loc>
+    <loc>/categories/aws/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/tags/aws/</loc>
+    <loc>/tags/aws/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/categories/</loc>
+    <loc>/categories/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/categories/cloud-security/</loc>
+    <loc>/categories/cloud-security/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/tags/ec2/</loc>
+    <loc>/tags/ec2/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/tags/getting-started/</loc>
+    <loc>/tags/getting-started/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/posts/aws-security-groups/</loc>
+    <loc>/posts/aws-security-groups/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/tags/lambda/</loc>
+    <loc>/posts/kubernetes-clb/kubernetes-classic-loadbalancer-explained/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/categories/meta/</loc>
+    <loc>/tags/lambda/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/posts/my-first-post/</loc>
+    <loc>/categories/meta/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/tags/organizations/</loc>
+    <loc>/posts/my-first-post/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/posts/</loc>
+    <loc>/tags/organizations/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/tags/security/</loc>
+    <loc>/posts/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/tags/</loc>
+    <loc>/tags/security/</loc>
     <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/about/</loc>
+    <loc>/tags/</loc>
+    <lastmod>2026-04-25T21:44:49+04:00</lastmod>
   </url><url>
-    <loc>//localhost:1313/archives/</loc>
+    <loc>/posts/kubernetes-clb/assets/assets/2026-04-27-09.28.excalidraw/</loc>
   </url><url>
-    <loc>//localhost:1313/tags/excalidraw/</loc>
+    <loc>/about/</loc>
   </url><url>
-    <loc>//localhost:1313/search/</loc>
+    <loc>/archives/</loc>
+  </url><url>
+    <loc>/tags/excalidraw/</loc>
+  </url><url>
+    <loc>/search/</loc>
   </url>
 </urlset>
